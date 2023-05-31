@@ -1,6 +1,13 @@
 import sys
 import json
- 
+import os
+
+required_folders = ["./config_folder", "./scripts", "./logs"]
+
+for folder in required_folders:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
 c = ["gm"] 
 e = [1,5,10]
 l = ["cos"]
