@@ -9,6 +9,8 @@ from flask import render_template, jsonify
 from flask_cors import CORS
 from rq.job import Job
 from worker import conn
+# Is this a relevant usage example of the above import (worker)?
+# https://devcenter.heroku.com/articles/python-rq
 import json
 
 FLASK_APP = Flask(__name__)
