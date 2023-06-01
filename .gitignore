@@ -2,6 +2,7 @@ config_folder
 scripts
 logs
 .DS_Store
+workdir
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

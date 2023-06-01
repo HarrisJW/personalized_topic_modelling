@@ -7,7 +7,7 @@ import pickle as pkl
 x = PrettyTable()
 x.field_names = ["Dataset", "Oracle", "Loss", "Clus Method", "Epoch per feedback", "Umap flag", *map(lambda i:f'F{i}',range(50))]
 json_data = []
-for filename in glob.glob('/home/bh563857/thesis_backend/config_folder/*.json'):
+for filename in glob.glob('./config_folder/*.json'):
     with open(filename) as json_file:
         json_data = json.load(json_file)  
         r_file = f'{json_data["workdir"]}/result.pkl'.replace('workdirs','workdirs')

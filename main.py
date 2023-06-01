@@ -9,8 +9,10 @@ from flask import render_template, jsonify
 from flask_cors import CORS
 from rq.job import Job
 from worker import conn
+
 # Is this a relevant usage example of the above import (worker)?
 # https://devcenter.heroku.com/articles/python-rq
+
 import json
 
 FLASK_APP = Flask(__name__)
@@ -109,7 +111,13 @@ def summary_meta():
 @FLASK_APP.route('/set_model/<string:model_name>/<int:min_cluster_size>')
 def set_model(model_name, min_cluster_size):
     global global_model
-    global_model = MLModel(DATASET)
+    
+    
+    config = {'clus_method': 'hdb', 'workdir': './workdir'} 
+    #model.py specifies the MLModel class, and its config seems to be a dictionary specifying e.g. clustering method.
+    global_model = MLModel(DATASET, config) #Need to specify config details
+    
+    
     if model_name == 'default':
         global_model.run_all('all-MiniLM-L6-v2', 'saved/doc-embeddings_default.npy', min_cluster_size)
     else:
