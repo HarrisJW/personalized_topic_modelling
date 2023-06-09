@@ -119,7 +119,9 @@ def set_model(model_name, min_cluster_size):
     
     
     if model_name == 'default':
-        global_model.run_all('all-MiniLM-L6-v2', 'saved/doc-embeddings_default.npy', min_cluster_size)
+        #This does not appear to require the first positional argument.
+        #global_model.run_all('all-MiniLM-L6-v2', 'saved/doc-embeddings_default.npy', min_cluster_size)
+        global_model.run_all('saved/doc-embeddings_default.npy', min_cluster_size)
     else:
         time_stamp = model_name.split('_')[1]
         global_model.run_all('saved/retrained-model_' + time_stamp, 'saved/doc-embeddings_' + time_stamp + '.npy',

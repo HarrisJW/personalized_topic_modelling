@@ -31,7 +31,8 @@ for i in c:
                         suffix = f"{a}{n}{i}_{j}_{k}_{m}"
                         dictionary = {
                                         "num_iters": 50,
-                                        "model_path": "saved/minilm-download",#saved/all-distilroberta-v1",
+                                        "model_path": "sentence-transformers/all-MiniLM-L6-v2",
+                                        #"model_path": "saved/minilm-download",#saved/all-distilroberta-v1",
                                         "min_cluster_size": d[a],
                                         "clus_method":i,
                                         "epoch": j,
