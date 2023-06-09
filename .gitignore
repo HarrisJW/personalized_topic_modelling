@@ -3,6 +3,7 @@ scripts
 logs
 .DS_Store
 workdir
+workdirs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
