@@ -428,7 +428,7 @@ class MLModel:
         :return: None
         """
         config = self.config
-        print(len(feedback)) # 25
+        print("Length of feedback:" + len(feedback)) # 25
         full_train_data = []
         source_cluster = int(self.doc_top[feedback[0][0]]) # 0
         cluster_labels = pd.Series(self.clusters)
@@ -441,14 +441,14 @@ class MLModel:
         for id_,target in feedback:# 25 times
             for doc in source_cluster_docs:# 75 times
                 full_train_data.append(InputExample(texts=[self.documents[id_],doc], label=0))
-        print(len(full_train_data)) # 25*75
+        print("Length of full_train_data:" +len(full_train_data)) # 25*75
 
         for i in range(0,len(feedback)):#
             for j in range(i+1, len(feedback)): #
                 id1, id2 = feedback[i][0], feedback[j][0]
                 full_train_data.append(InputExample(texts=[self.documents[id1], self.documents[id2]], label=1))
                 # 25*24/2
-        print(len(full_train_data))
+        print("Length of full_train_data:" + len(full_train_data))
         self.bank.extend(full_train_data)
         
         import random
@@ -466,13 +466,13 @@ class MLModel:
         :return: None
         """
         config = self.config
-        print(len(feedback)) # 25
+        print("Length of feedback:" + len(feedback)) # 25
         full_train_data = []
 
         source_cluster = int(self.doc_top[feedback[0][0]]) # 0
         for id_,target in feedback:# 25 times
             full_train_data.append(InputExample(texts=[self.documents[id_],*self.all_cws], label=target))
-        print(len(full_train_data))
+        print("Length of full_train_data:" + len(full_train_data))
         self.bank.extend(full_train_data)
         bank = self.bank + self.bm25_data
         import random
@@ -581,7 +581,7 @@ class MLModel:
         for idx in set(range(len(self.documents)))-seen_idxs:
             unlabeled_data_v2.append(InputExample(texts=[self.documents[idx], *all_cws], label=-1))
         
-        print(len(full_train_data))
+        print("Length of full_train_data:" + len(full_train_data))
         self.bm25_data = full_train_data 
         self.unlab_v2 = unlabeled_data_v2
         self.v2_bank = full_train_data + unlabeled_data_v2
