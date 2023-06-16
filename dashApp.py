@@ -3,6 +3,7 @@
 
 from dash import Dash, html, dash_table, dcc, callback, Output, Input
 import pandas as pd
+import plotly.express as px
 
 app = Dash(__name__)
 
@@ -14,7 +15,8 @@ df = pd.DataFrame(data=data)
 
 app.layout = html.Div([
     html.Div(children='Topic Modeling'),
-    dash_table.DataTable(data=df.to_dict('records'), page_size=10)
+    dash_table.DataTable(data=df.to_dict('records'), page_size=10),
+    dcc.Graph(figure=px.histogram(df, x='topics', y='probabilities'))
 ])
 
 if __name__ == '__main__':
