@@ -26,7 +26,7 @@ app.layout = html.Div([
     html.Div(children='Topic Modeling'),
     html.Hr(),
     dash_table.DataTable(data=df.to_dict('records'), page_size=10),
-    dcc.RadioItems(options=['top2Vec', 'probTop2Vec'], value='model', id='model-selector-controls'),
+    dcc.RadioItems(options=['top2Vec', 'probTop2Vec'], value='top2Vec', id='model-selector-controls'),
     dcc.Graph(figure={},id='graph')
 ])
 
