@@ -150,6 +150,7 @@ class MLModel:
     def set_pretrained_model(self, model_path):
         self.pretrained_model = SentenceTransformer(model_path)
         #self.document_embeddings = np.load(document_embeddings)
+        print("Determining document embeddings")
         self.document_embeddings = self.pretrained_model.encode(self.documents)
         if model_path == "all-MiniLM-L6-v2":
             self.model_name = "default"

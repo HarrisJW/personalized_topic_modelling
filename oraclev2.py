@@ -12,8 +12,9 @@ class Oraclev2:
     def __init__(self, docs, labels, model, target_names = None):
         self.docs = docs
         self.labels = labels
-        self.class_words = self.extract_cw(docs, labels)
+        self.class_words = self.extract_class_words(docs, labels)
         # if target_names is not None:
+        print("Printing oraclev2 class_words")
         for c in sorted(self.class_words):
             print(f"{c} {self.class_words[c]}")
         self.global_model = None
@@ -62,7 +63,7 @@ class Oraclev2:
         return most_scattered_label
 
 
-    def extract_cw(self, docs, labels):
+    def extract_class_words(self, docs, labels):
         # Convert to TF-IDF format
         tfidfV = TfidfVectorizer(stop_words='english') 
         X_train_tfidfV_dt = tfidfV.fit_transform(docs) # fit_transform learns the vocab and one-hot encodes        
@@ -86,6 +87,7 @@ class Oraclev2:
             for i in c:
                 c2w[class_].append(i2w[i])  
             class_ += 1
+        print("Printing class words")
         print(c2w)
         words = set(tfidfV.vocabulary_)    
         
