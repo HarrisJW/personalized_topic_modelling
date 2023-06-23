@@ -148,10 +148,12 @@ class MLModel:
         self.v2v1_posdataloader = None
 
     def set_pretrained_model(self, model_path):
+        #Load pretrained model from huggingface:
+        #https://www.sbert.net/docs/hugging_face.html
         self.pretrained_model = SentenceTransformer(model_path)
         #self.document_embeddings = np.load(document_embeddings)
         print("Determining document embeddings")
-        self.document_embeddings = self.pretrained_model.encode(self.documents)
+        self.document_embeddings = self.pretrained_model.encode(self.documents, show_progress_bar = True)
         if model_path == "all-MiniLM-L6-v2":
             self.model_name = "default"
         else:
@@ -429,7 +431,8 @@ class MLModel:
         :return: None
         """
         config = self.config
-        print("Length of feedback:" + len(feedback)) # 25
+        print("Length of feedback:")
+        print(len(feedback))# 25
         full_train_data = []
         source_cluster = int(self.doc_top[feedback[0][0]]) # 0
         cluster_labels = pd.Series(self.clusters)
@@ -442,14 +445,16 @@ class MLModel:
         for id_,target in feedback:# 25 times
             for doc in source_cluster_docs:# 75 times
                 full_train_data.append(InputExample(texts=[self.documents[id_],doc], label=0))
-        print("Length of full_train_data:" +len(full_train_data)) # 25*75
+        print("Length of full_train_data:")
+        print(len(full_train_data)) # 25*75
 
         for i in range(0,len(feedback)):#
             for j in range(i+1, len(feedback)): #
                 id1, id2 = feedback[i][0], feedback[j][0]
                 full_train_data.append(InputExample(texts=[self.documents[id1], self.documents[id2]], label=1))
                 # 25*24/2
-        print("Length of full_train_data:" + len(full_train_data))
+        print("Length of full_train_data:")
+        print(len(full_train_data))
         self.bank.extend(full_train_data)
         
         import random
@@ -467,13 +472,15 @@ class MLModel:
         :return: None
         """
         config = self.config
-        print("Length of feedback:" + len(feedback)) # 25
+        print("Length of feedback:")
+        print(len(feedback)) # 25
         full_train_data = []
 
         source_cluster = int(self.doc_top[feedback[0][0]]) # 0
         for id_,target in feedback:# 25 times
             full_train_data.append(InputExample(texts=[self.documents[id_],*self.all_cws], label=target))
-        print("Length of full_train_data:" + len(full_train_data))
+        print("Length of full_train_data:")
+        print(len(full_train_data))
         self.bank.extend(full_train_data)
         bank = self.bank + self.bm25_data
         import random

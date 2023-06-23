@@ -64,6 +64,17 @@ class Oraclev2:
 
 
     def extract_class_words(self, docs, labels):
+        '''
+
+        Input: a list of documents and an ndarray of class labels for these documents.
+        Output: a dictionary of the top n words most representative of documents in each class.
+
+        (Train a logistic regression model on the multiclass classification problem of classifying
+        documents based on their tf-idf representations and identify the most
+        important words for identifying each class)
+
+        '''
+
         # Convert to TF-IDF format
         tfidfV = TfidfVectorizer(stop_words='english') 
         X_train_tfidfV_dt = tfidfV.fit_transform(docs) # fit_transform learns the vocab and one-hot encodes        

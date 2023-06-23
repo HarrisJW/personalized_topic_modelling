@@ -8,39 +8,38 @@ for folder in required_folders:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-c = ["gm"] 
-e = [1,5,10]
-l = ["cos"]
-u = [False]
-o = ["v1","v1v2"]
-d = {'20newsgroups':20,
+clustering_approaches = ["gm"]
+epochs = [1, 5, 10]
+loss_functions = ["cos"]
+umap_usages = [False]
+oracles = ["v1", "v1v2"]
+datasets = {'20newsgroups':20,
 'wvsh':2,
 'nova':2,
 'autovsaviation':2,
 'simvsreal':2
-}
+            }
 # Data to be written
-
-for i in c:
-    for j in e:
-        for k in l:
-            for m in u:
-                for n in o:
-                    for a in d:
+for clustering_approach in clustering_approaches:
+    for epoch in epochs:
+        for loss_function in loss_functions:
+            for umap_usage in umap_usages:
+                for oracle in oracles:
+                    for dataset in datasets:
                         # Generate config 
-                        suffix = f"{a}{n}{i}_{j}_{k}_{m}"
+                        suffix = f"{dataset}{oracle}{clustering_approach}_{epoch}_{loss_function}_{umap_usage}"
                         dictionary = {
                                         "num_iters": 50,
                                         "model_path": "sentence-transformers/all-MiniLM-L6-v2",
                                         #"model_path": "saved/minilm-download",#saved/all-distilroberta-v1",
-                                        "min_cluster_size": d[a],
-                                        "clus_method":i,
-                                        "epoch": j,
-                                        "loss": k,
-                                        "umap": m,
+                                        "min_cluster_size": datasets[dataset],
+                                        "clus_method":clustering_approach,
+                                        "epoch": epoch,
+                                        "loss": loss_function,
+                                        "umap": umap_usage,
                                         "workdir":f'workdirs/run_{suffix}',
-                                        "oracle": n,
-                                        "dataset":a
+                                        "oracle": oracle,
+                                        "dataset":dataset
                                     }
     
                         # Serializing json
