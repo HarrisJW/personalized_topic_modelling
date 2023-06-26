@@ -109,13 +109,17 @@ def eval(config, debug=False):
     
     for i,d in enumerate(DATASET):
         DATASET[i] = d.lower()
+
     global_model = None
     
     m = MLModel(DATASET, config)
     
     o1 = Oraclev1(DATASET, GROUND_TRUTH, global_model)
     o2 = Oraclev2(DATASET, GROUND_TRUTH, global_model)
+
     model_path = config["model_path"]
+
+    #apply word-level feedback through oracle 2
     if 'v2' in config['oracle']:
         top2vec = m.run_all(model_path, config['min_cluster_size'])
         labels = m.make_clusters(config['min_cluster_size'])
@@ -141,6 +145,8 @@ def eval(config, debug=False):
         max_purity, model_path = max(L)
         result['v2'] = max_purity
         print(f"Choosing model_path {model_path} with purity={max_purity}")
+
+    #apply document-level feedback through oracle1
     if 'v1' in config['oracle']:
         i = 0
         while i < num_feedback_iters:

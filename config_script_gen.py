@@ -31,7 +31,8 @@ for clustering_approach in clustering_approaches:
                         dictionary = {
                                         "num_iters": 50,
                                         "model_path": "sentence-transformers/all-MiniLM-L6-v2",
-                                        #"model_path": "saved/minilm-download",#saved/all-distilroberta-v1",
+                                        #"model_path": "saved/minilm-download",
+                                        #"model_path": "saved/all-distilroberta-v1",
                                         "min_cluster_size": datasets[dataset],
                                         "clus_method":clustering_approach,
                                         "epoch": epoch,
