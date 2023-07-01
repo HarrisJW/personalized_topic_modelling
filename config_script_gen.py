@@ -17,7 +17,10 @@ datasets = {'20newsgroups':20,
 'wvsh':2,
 'nova':2,
 'autovsaviation':2,
-'simvsreal':2
+'simvsreal':2,
+'test':20 #Added to allow for testing with a limited subset of 20newsgroups data. I think that the number 20 represents
+            # the number of possble ground truth states (i.e classes) in the dataset. I verified that the random
+            # sample contained in the test dataset contains at least one of all 20 ground truth labels (0-19).
             }
 # Data to be written
 for clustering_approach in clustering_approaches:

@@ -8,9 +8,11 @@ import json
 import os
 import pprint
 import pprint
+import pandas as pd
 
 
 def get_dataset(dataset):
+
     if dataset == '20newsgroups':
         DATASET = fetch_20newsgroups(data_home=".",
                                     subset='train',
@@ -21,6 +23,22 @@ def get_dataset(dataset):
                                         remove=('headers', 'footers',
                                                 'quotes')).target
         return DATASET, GROUND_TRUTH
+
+#Jonathan added this. Jul 1 2023
+    elif dataset == 'test':
+
+        testData = pd.read_csv('../20news_500samples.csv')
+
+        # Running into issues with newline characters.
+        # https://stackoverflow.com/questions/44227748/removing-newlines-from-messy-strings-in-pandas-dataframe-cells
+        testData = testData.replace(r'\n',' ', regex=True).fillna('')
+
+        DATASET = testData.text.tolist()
+
+        GROUND_TRUTH = testData.target.to_numpy()
+
+        return DATASET, GROUND_TRUTH
+
     elif dataset == 'wvsh':
         DATASET = fetch_20newsgroups(data_home=".",
                                     subset='train',
