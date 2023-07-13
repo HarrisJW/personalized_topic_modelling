@@ -132,7 +132,10 @@ class Oraclev2:
         # for id in range(len(self.docs)):
         #     if self.labels[id]==c:
         #         ids.append(id)
-        # return self.class_words[c], ids 
+        # return self.class_words[c], ids
+
+        #https://pypi.org/project/rank-bm25/
+
         tokenized_query = self.class_words[c]
         N = min(50,(self.bm25.get_scores(tokenized_query)!=0).sum())
         docs = self.bm25.get_top_n(tokenized_query,self.tokenized_corpus,n=N)

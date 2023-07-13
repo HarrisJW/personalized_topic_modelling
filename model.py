@@ -213,29 +213,29 @@ class MLModel:
         # self.topic_words, self.topic_word_scores = self.find_topic_words_and_scores(topic_vectors=self.topic_vectors)
         # self.doc_top, self.doc_dist = self.calculate_documents_topic(self.topic_vectors, self.document_embeddings)
         # self.doc_top = np.array(self.doc_top, dtype="int")
-        self.doc_top = self.clusters
+        self.document_topics = self.clusters
         return cluster_labels
 
     def get_topic_words(self, topic_number):
         return self.topic_words[topic_number][:10], self.topic_word_scores[topic_number][:10]
 
     def get_document_topic(self, doc_id):
-        return self.doc_top[doc_id]
+        return self.document_topics[doc_id]
 
     def render_plot_data(self):
         #hue_cat = [self.topic_words[top][0] for top in self.doc_top]
-        hue_cat = [int(top) for top in self.doc_top]
-        return self.umap_data_viz[:, 0], self.umap_data_viz[:, 1], hue_cat, ["Topic: "+str(self.doc_top[a])+" Doc_id: "+str(a)+" - "+str(b[:100]) for a,b in zip(self.document_ids, self.documents)]
+        hue_cat = [int(top) for top in self.document_topics]
+        return self.umap_data_viz[:, 0], self.umap_data_viz[:, 1], hue_cat, ["Topic: " + str(self.document_topics[a]) + " Doc_id: " + str(a) + " - " + str(b[:100]) for a, b in zip(self.document_ids, self.documents)]
 
     def render_selected_topic(self, topics):
-        hue_cat = [self.topic_words[top][0] for top in self.doc_top]
+        hue_cat = [self.topic_words[top][0] for top in self.document_topics]
         cluster_labels = pd.Series(self.clusters)
         s = (cluster_labels == topics[0])
         return self.umap_data_viz[s][:, 0], self.umap_data_viz[s][:, 1], self.topic_words[topics[0]][0], [str(a)+" - "+str(b[:100]) for a,b in zip(self.document_ids[s], self.np_docs[s])]
 
     def search_documents_by_topic(self, topic_num, num_docs=10, return_documents=True):
 
-        topic_document_indexes = np.where(self.doc_top == topic_num)[0]
+        topic_document_indexes = np.where(self.document_topics == topic_num)[0]
         topic_document_indexes_ordered = np.flip(np.argsort(self.doc_dist[topic_document_indexes]))
         doc_indexes = topic_document_indexes[topic_document_indexes_ordered][0:num_docs]
         doc_scores = self.doc_dist[doc_indexes]
@@ -243,7 +243,7 @@ class MLModel:
 
         if self.documents is not None and return_documents:
             documents = self.np_docs[doc_indexes]
-            doc_topics = self.doc_top[doc_indexes]
+            doc_topics = self.document_topics[doc_indexes]
             return documents, doc_topics, doc_ids, doc_scores
         else:
             return doc_scores, doc_ids
@@ -337,7 +337,7 @@ class MLModel:
 
     def get_document_detail(self, doc_id):
         doc_text = str(self.documents[doc_id])
-        doc_topic = int(self.doc_top[doc_id])
+        doc_topic = int(self.document_topics[doc_id])
         return doc_text, doc_topic
 
     def search_documents_by_keywords(self, keywords, num_docs, keywords_neg=None, return_documents=True,
@@ -356,7 +356,7 @@ class MLModel:
 
         if self.documents is not None and return_documents:
             documents = self.np_docs[doc_indexes]
-            doc_topics = self.doc_top[doc_indexes]
+            doc_topics = self.document_topics[doc_indexes]
             return documents, doc_topics, doc_ids, doc_scores
         else:
             return doc_scores, doc_ids
@@ -434,7 +434,7 @@ class MLModel:
         print("Length of feedback:")
         print(len(feedback))# 25
         full_train_data = []
-        source_cluster = int(self.doc_top[feedback[0][0]]) # 0
+        source_cluster = int(self.document_topics[feedback[0][0]]) # 0
         cluster_labels = pd.Series(self.clusters)
         ss = (cluster_labels == source_cluster) # 100 True values
         
@@ -476,9 +476,9 @@ class MLModel:
         print(len(feedback)) # 25
         full_train_data = []
 
-        source_cluster = int(self.doc_top[feedback[0][0]]) # 0
+        source_cluster = int(self.document_topics[feedback[0][0]]) # 0
         for id_,target in feedback:# 25 times
-            full_train_data.append(InputExample(texts=[self.documents[id_],*self.all_cws], label=target))
+            full_train_data.append(InputExample(texts=[self.documents[id_], *self.all_class_words], label=target))
         print("Length of full_train_data:")
         print(len(full_train_data))
         self.bank.extend(full_train_data)
@@ -490,6 +490,11 @@ class MLModel:
         # if (config['loss']=='cos'):
 
     def finetune(self, model_path):
+        '''
+
+            Retrain model on training objectives found in data loader.
+
+        '''
         retrain_model = SentenceTransformer(model_path)
         train_objectives = []
         if self.v1_dataloader!=None:
@@ -574,22 +579,22 @@ class MLModel:
         if feedback is not None:
             self.feedbacks.append(feedback)
         full_train_data = []
-        self.all_cws = all_cws = [' '.join(f[0]) for f in self.feedbacks]
-        seen_idxs = set()
-        for c, (cw, feedback) in enumerate(self.feedbacks):
+        self.all_class_words = all_class_words = [' '.join(f[0]) for f in self.feedbacks]
+        seen_indexes = set()
+        for c, (class_words, feedback) in enumerate(self.feedbacks):
             clusters = set()
-            for doc_id in feedback:
-                clusters.add(self.doc_top[doc_id])
+            for document_id in feedback:
+                clusters.add(self.document_topics[document_id])
             
             for i in range(0,len(feedback)):
                 d1 = self.documents[feedback[i]]
-                seen_idxs.add(i)
-                full_train_data.append(InputExample(texts=[d1, *all_cws], label=c))
+                seen_indexes.add(i)
+                full_train_data.append(InputExample(texts=[d1, *all_class_words], label=c))
         unlabeled_data_v2 = [] 
-        for idx in set(range(len(self.documents)))-seen_idxs:
-            unlabeled_data_v2.append(InputExample(texts=[self.documents[idx], *all_cws], label=-1))
+        for index in set(range(len(self.documents)))-seen_indexes:
+            unlabeled_data_v2.append(InputExample(texts=[self.documents[index], *all_class_words], label=-1))
         
-        print("Length of full_train_data:" + len(full_train_data))
+        print("Length of full_train_data:" + str(len(full_train_data)))
         self.bm25_data = full_train_data 
         self.unlab_v2 = unlabeled_data_v2
         self.v2_bank = full_train_data + unlabeled_data_v2

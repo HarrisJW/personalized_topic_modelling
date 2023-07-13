@@ -124,7 +124,8 @@ def eval(config, debug=False):
         'v2':None,
     }
     DATASET, GROUND_TRUTH = get_dataset(config.get('dataset','20newsgroups'))
-    
+
+    #Convert data to lowercase.
     for i,d in enumerate(DATASET):
         DATASET[i] = d.lower()
 
