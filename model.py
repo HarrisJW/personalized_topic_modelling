@@ -204,11 +204,11 @@ class MLModel:
             self.clusters = gm.predict(self.umap_embeddings_cluster)
        
         cluster_labels = self.clusters
-        unique_labels = set(cluster_labels)
-        if -1 in unique_labels:
-            unique_labels.remove(-1)
+        unique_cluster_labels = set(cluster_labels)
+        if -1 in unique_cluster_labels:
+            unique_cluster_labels.remove(-1)
         self.topic_vectors = (np.vstack([self.document_embeddings[np.where(cluster_labels == label)[0]]
-                      .mean(axis=0) for label in unique_labels]))
+                      .mean(axis=0) for label in unique_cluster_labels]))
 
         # self.topic_words, self.topic_word_scores = self.find_topic_words_and_scores(topic_vectors=self.topic_vectors)
         # self.doc_top, self.doc_dist = self.calculate_documents_topic(self.topic_vectors, self.document_embeddings)
@@ -574,6 +574,7 @@ class MLModel:
     #     return new_path
     
     def apply_f2w(self, feedback, train=True):
+
         import random
         config = self.config
         if feedback is not None:
@@ -581,24 +582,32 @@ class MLModel:
         full_train_data = []
         self.all_class_words = all_class_words = [' '.join(f[0]) for f in self.feedbacks]
         seen_indexes = set()
-        for c, (class_words, feedback) in enumerate(self.feedbacks):
-            clusters = set()
-            for document_id in feedback:
-                clusters.add(self.document_topics[document_id])
-            
+
+        for cluster, (class_words, feedback) in enumerate(self.feedbacks):
+
+            #Determine which unique clusters are represented in the feedback
+            #clusters = set()
+            #for document_id in feedback:
+            #    clusters.add(self.document_topics[document_id])
+
+            # Add documents and class words represented in feedback to training data.
+            # Label these as belonging to current cluster.
+
             for i in range(0,len(feedback)):
                 d1 = self.documents[feedback[i]]
                 seen_indexes.add(i)
-                full_train_data.append(InputExample(texts=[d1, *all_class_words], label=c))
+                full_train_data.append(InputExample(texts=[d1, *all_class_words], label=cluster))
+
+        #Label all other documents as -1.
         unlabeled_data_v2 = [] 
         for index in set(range(len(self.documents)))-seen_indexes:
             unlabeled_data_v2.append(InputExample(texts=[self.documents[index], *all_class_words], label=-1))
         
-        print("Length of full_train_data:" + str(len(full_train_data)))
+        #print("Length of full_train_data:" + str(len(full_train_data)))
         self.bm25_data = full_train_data 
         self.unlab_v2 = unlabeled_data_v2
         self.v2_bank = full_train_data + unlabeled_data_v2
-        import random
+
         self.v2_dataloader = DataLoader(random.sample(self.v2_bank,min(len(self.v2_bank),200*500*config['epoch'])), shuffle=True, batch_size=200)
         # retrain_model = SentenceTransformer(model_path)
         # if (config['loss']=='sbert_type'):

@@ -141,14 +141,14 @@ def eval(config, debug=False):
     #apply word-level feedback through oracle 2
     if 'v2' in config['oracle']:
         top2vec = m.run_all(model_path, config['min_cluster_size'])
-        labels = m.make_clusters(config['min_cluster_size'])
-        for j in range(config["min_cluster_size"]):
-            m.apply_f2w(o2.get_docs_for(j), train=False)
+        cluster_labels = m.make_clusters(config['min_cluster_size'])
+        for cluster_id in range(config["min_cluster_size"]):
+            m.apply_f2w(o2.get_bm25_docs_by_cluster_class_words(cluster_id), train=False)
         L = []
         for i in range(10):
-            print(len(labels))
+            print(len(cluster_labels))
             print(len(GROUND_TRUTH))
-            purity_stats = o2.get_purity(labels)
+            purity_stats = o2.get_purity(cluster_labels)
             a = np.array(
                 sorted(map(
                     lambda k:
@@ -160,7 +160,7 @@ def eval(config, debug=False):
             L.append((a.mean(axis=0)[0],model_path))
             model_path = m.finetune(model_path)
             top2vec = m.run_all(model_path, config['min_cluster_size'])
-            labels = m.make_clusters(config['min_cluster_size'])
+            cluster_labels = m.make_clusters(config['min_cluster_size'])
         max_purity, model_path = max(L)
         result['v2'] = max_purity
         print(f"Choosing model_path {model_path} with purity={max_purity}")
@@ -172,8 +172,8 @@ def eval(config, debug=False):
             # call top2vec
             # give top2vec cluster_labels to oracle
             top2vec = m.run_all(model_path, config['min_cluster_size'])
-            labels = m.make_clusters(config['min_cluster_size'])
-            purities.append(o2.get_purity(labels))
+            cluster_labels = m.make_clusters(config['min_cluster_size'])
+            purities.append(o2.get_purity(cluster_labels))
             a = np.array(
                 sorted(map(
                     lambda k:
@@ -183,23 +183,23 @@ def eval(config, debug=False):
             pprint.pprint(a.tolist())
             print(a.mean(axis=0))
             if debug:
-                return labels, o1, o2
+                return cluster_labels, o1, o2
             result['purities'].append(a)
             with open(f'{config["workdir"]}/result.pkl', 'wb') as f:
                 pickle.dump(result, f)        
             
             if 'v2' in config['oracle']:
-                feedback = o1.get_feedback_neg(labels)
+                feedback = o1.get_feedback_neg(cluster_labels)
                 m.apply_feedbackv2v1_neg(feedback)
             else:
-                feedback = o1.get_feedback(labels)
+                feedback = o1.get_feedback(cluster_labels)
                 m.apply_feedback(feedback)
             model_path = m.finetune(model_path)
             i+=1
 
     top2vec = m.run_all(model_path, config['min_cluster_size'])
-    labels = m.make_clusters(config['min_cluster_size'])
-    purities.append(o2.get_purity(labels))
+    cluster_labels = m.make_clusters(config['min_cluster_size'])
+    purities.append(o2.get_purity(cluster_labels))
     a = np.array(
         sorted(map(
             lambda k:

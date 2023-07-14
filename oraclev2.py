@@ -103,12 +103,12 @@ class Oraclev2:
         words = set(tfidfV.vocabulary_)    
         
         self.tokenized_corpus = []
-        self.tokens2sent={}
+        self.tfidf_word_document_representations={}
         tokens2class = {}
         for i in range(X_train_tfidfV_dt.shape[0]):
             full_sent = docs[i]
             tokens = tuple([w for w in full_sent.lower().split() if w in words])
-            self.tokens2sent[tokens]= i
+            self.tfidf_word_document_representations[tokens]= i
             self.tokenized_corpus.append(tokens)
             tokens2class[tokens] = labels[i]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
@@ -125,9 +125,9 @@ class Oraclev2:
         if type(c)==list:
             return []
         print(f"Feedback given for class {c}")
-        return self.get_docs_for(c)
+        return self.get_bm25_docs_by_cluster_class_words(c)
     
-    def get_docs_for(self, c):
+    def get_bm25_docs_by_cluster_class_words(self, c):
         # ids = []
         # for id in range(len(self.docs)):
         #     if self.labels[id]==c:
@@ -141,7 +141,7 @@ class Oraclev2:
         docs = self.bm25.get_top_n(tokenized_query,self.tokenized_corpus,n=N)
         feedback = []
         for doc in range(len(docs)):
-            feedback.append(self.tokens2sent[docs[doc]])
+            feedback.append(self.tfidf_word_document_representations[docs[doc]])
         return tokenized_query, feedback
 
 
