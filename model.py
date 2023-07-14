@@ -1,7 +1,8 @@
 from sklearn.datasets import fetch_20newsgroups
 import pandas as pd
 import numpy as np
-# import umap
+import umap.umap_ as umap
+
 import hdbscan
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
