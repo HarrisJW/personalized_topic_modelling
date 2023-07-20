@@ -134,8 +134,8 @@ class MLModel:
         self.id2doc = dict(zip(self.document_ids, documents))
         self.pretrained_model = None
         self.document_embeddings = None
-        self.umap_embeddings_cluster = None
-        self.umap_data_viz = None
+        self.umap_document_embeddings_cluster = None
+        self.umap_document_embeddings_data_viz = None
         self.clusters = None
         self.topic_vectors = None
         self.new_path=None
@@ -169,18 +169,26 @@ class MLModel:
                                                  random_state=42).fit_transform(np.random.randn(10000,200))
         
         """
-        self.umap_embeddings_cluster = umap.UMAP(n_neighbors=25,
-                                                 n_components=5,
-                                                 metric='cosine',
-                                                 random_state=42).fit_transform(self.document_embeddings)
+        self.umap_document_embeddings_cluster = umap.UMAP(n_neighbors=25,
+                                                          n_components=5,
+                                                          metric='cosine',
+                                                          random_state=42).fit_transform(self.document_embeddings)
 
         # Visualization by UMAP reduction further to 2d
-        self.umap_data_viz = umap.UMAP(n_neighbors=25, n_components=2, min_dist=0.5, metric='cosine',
-                                       random_state=42).fit_transform(
+        self.umap_document_embeddings_data_viz = umap.UMAP(n_neighbors=25, n_components=2, min_dist=0.5, metric='cosine',
+                                                           random_state=42).fit_transform(
             self.document_embeddings)
 
-        self.x_range = [float(min(self.umap_data_viz[:, 0])-1.5), float(max(self.umap_data_viz[:, 0])+1.5)]
-        self.y_range = [float(min(self.umap_data_viz[:, 1])-1.5), float(max(self.umap_data_viz[:, 1])+1.5)]
+        # self.umap_topic_embeddings_cluster = umap.UMAP(n_neighbors=25,
+        #                                                   n_components=5,
+        #                                                   metric='cosine',
+        #                                                   random_state=42).fit_transform(self.topic_vectors)
+        #
+        # self.umap_topic_embeddings_data_viz = umap.UMAP(n_neighbors=25, n_components=2, min_dist=0.5, metric='cosine',
+        #                                                    random_state=42).fit_transform(self.topic_vectors)
+
+        self.x_range = [float(min(self.umap_document_embeddings_data_viz[:, 0]) - 1.5), float(max(self.umap_document_embeddings_data_viz[:, 0]) + 1.5)]
+        self.y_range = [float(min(self.umap_document_embeddings_data_viz[:, 1]) - 1.5), float(max(self.umap_document_embeddings_data_viz[:, 1]) + 1.5)]
 
     def make_clusters(self, min_cluster_size):
         config = self.config
@@ -189,11 +197,11 @@ class MLModel:
             import hdbscan
             self.clusters = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size,
                                             metric='euclidean',
-                                            cluster_selection_method='eom').fit(self.umap_embeddings_cluster)
+                                            cluster_selection_method='eom').fit(self.umap_document_embeddings_cluster)
             self.clusters = self.clusters.labels_
 
         if (config['clus_method']=='km'):
-            self.clusters = KMeans(n_clusters=min_cluster_size, random_state=0).fit(self.umap_embeddings_cluster)
+            self.clusters = KMeans(n_clusters=min_cluster_size, random_state=0).fit(self.umap_document_embeddings_cluster)
             self.clusters = self.clusters.labels_
 
         
@@ -201,8 +209,8 @@ class MLModel:
             mean_init = None
             if SemLoss.cvs is not None:
                 mean_init = (SemLoss.cvs)
-            gm = GaussianMixture(n_components=min_cluster_size, random_state=0, covariance_type='diag',means_init=mean_init).fit(self.umap_embeddings_cluster)
-            self.clusters = gm.predict(self.umap_embeddings_cluster)
+            gm = GaussianMixture(n_components=min_cluster_size, random_state=0, covariance_type='diag',means_init=mean_init).fit(self.umap_document_embeddings_cluster)
+            self.clusters = gm.predict(self.umap_document_embeddings_cluster)
        
         cluster_labels = self.clusters
         unique_cluster_labels = set(cluster_labels)
@@ -226,13 +234,13 @@ class MLModel:
     def render_plot_data(self):
         #hue_cat = [self.topic_words[top][0] for top in self.doc_top]
         hue_cat = [int(top) for top in self.document_topics]
-        return self.umap_data_viz[:, 0], self.umap_data_viz[:, 1], hue_cat, ["Topic: " + str(self.document_topics[a]) + " Doc_id: " + str(a) + " - " + str(b[:100]) for a, b in zip(self.document_ids, self.documents)]
+        return self.umap_document_embeddings_data_viz[:, 0], self.umap_document_embeddings_data_viz[:, 1], hue_cat, ["Topic: " + str(self.document_topics[a]) + " Doc_id: " + str(a) + " - " + str(b[:100]) for a, b in zip(self.document_ids, self.documents)]
 
     def render_selected_topic(self, topics):
         hue_cat = [self.topic_words[top][0] for top in self.document_topics]
         cluster_labels = pd.Series(self.clusters)
         s = (cluster_labels == topics[0])
-        return self.umap_data_viz[s][:, 0], self.umap_data_viz[s][:, 1], self.topic_words[topics[0]][0], [str(a)+" - "+str(b[:100]) for a,b in zip(self.document_ids[s], self.np_docs[s])]
+        return self.umap_document_embeddings_data_viz[s][:, 0], self.umap_document_embeddings_data_viz[s][:, 1], self.topic_words[topics[0]][0], [str(a) + " - " + str(b[:100]) for a, b in zip(self.document_ids[s], self.np_docs[s])]
 
     def search_documents_by_topic(self, topic_num, num_docs=10, return_documents=True):
 
@@ -624,14 +632,33 @@ class MLModel:
         # retrain_model.save(new_path)
         # return new_path
 
+    def updateVocabularyAndDocumentTermMatrix(self):
+
+        '''4: DT, W ← TFIDF(D) ◃ Returns vocabulary W and a Document - term matrix of
+        shape | W |× | D | by applying TFIDF.'''
+
+        #Do tf-idf on self.documents
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
+        vectorizer = TfidfVectorizer()
+
+        self.document_term_matrix = vectorizer.fit_transform(self.documents)
+        self.vocabulary = vectorizer.get_feature_names_out()
+
+        return
+
     def run_all(self, model_path, min_cluster_size):
         self.min_cluster_size = min_cluster_size
         self.set_pretrained_model(model_path)
         if self.config['umap']:
             self.reduce_dims()
         else:
-            self.umap_embeddings_cluster = self.document_embeddings
+            self.umap_document_embeddings_cluster = self.document_embeddings
         self.make_clusters(min_cluster_size)
+
+        #Step 4 of ProbTop2Vec Algorithm
+        self.updateVocabularyAndDocumentTermMatrix()
+
 
 
 

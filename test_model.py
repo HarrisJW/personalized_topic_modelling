@@ -25,7 +25,7 @@ m = MLModel(DATASET, config)
 
 m.run_all(model_path, config['min_cluster_size'])
 
-df = pd.DataFrame(data = m.umap_data_viz)
+df = pd.DataFrame(data = m.umap_document_embeddings_data_viz)
 df.columns = ['x', 'y']
 df['cluster_id'] = m.clusters.tolist()
 df['document_text'] = m.documents
