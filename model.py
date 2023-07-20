@@ -147,6 +147,9 @@ class MLModel:
         self.v2_dataloader = None
         self.v2v1_negdataloader = None
         self.v2v1_posdataloader = None
+        self.document_term_matrix = None
+        self.vocabulary = None
+        self.probOfWordGivenDoc = None
 
     def set_pretrained_model(self, model_path):
         #Load pretrained model from huggingface:
@@ -647,6 +650,14 @@ class MLModel:
 
         return
 
+    def getProbOfWordGivenDocument(self):
+
+        from sklearn.preprocessing import normalize
+
+        self.probOfWordGivenDoc = normalize(self.document_term_matrix, axis=0, norm='l1')
+
+        return
+
     def run_all(self, model_path, min_cluster_size):
         self.min_cluster_size = min_cluster_size
         self.set_pretrained_model(model_path)
@@ -658,6 +669,9 @@ class MLModel:
 
         #Step 4 of ProbTop2Vec Algorithm
         self.updateVocabularyAndDocumentTermMatrix()
+
+        #Step 5 of ProbTop2Vec Algorithm
+        self.getProbOfWordGivenDocument()
 
 
 
