@@ -29,6 +29,7 @@ df = pd.DataFrame(data = m.umap_document_embeddings_data_viz)
 df.columns = ['x', 'y']
 df['cluster_id'] = m.clusters.tolist()
 df['document_text'] = m.documents
+#df['words_probabilities'] = m.mostProbableWordsForAllDocuments
 
 fig = px.scatter(df, x="x", y="y", color="cluster_id", hover_data=['cluster_id', 'document_text'])
 fig.show()

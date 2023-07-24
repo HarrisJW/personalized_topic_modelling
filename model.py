@@ -654,7 +654,32 @@ class MLModel:
 
         from sklearn.preprocessing import normalize
 
+        #TODO: Should this be an l1 norm? Or something else?
         self.probOfWordGivenDoc = normalize(self.document_term_matrix, axis=0, norm='l1')
+
+        return
+
+    def getMostProbableWordsForAllDocuments(self):
+
+        self.mostProbableWordsForAllDocuments = pd.DataFrame(columns=['doc_id', 'word', 'probability'])
+
+        for doc_id in range(0, len(self.documents)):
+
+            output = self.probOfWordGivenDoc[doc_id]
+            rows, columns = output.nonzero()
+
+            words = self.vocabulary[columns]
+            probs = output[rows, columns]
+            probs = np.squeeze(np.asarray(probs)) # https://stackoverflow.com/questions/3337301/numpy-matrix-to-array
+            doc_ids = [doc_id] * len(words)
+
+            newData = pd.DataFrame({"doc_id":doc_ids,
+                    "word": words,
+                    "probability": probs})
+
+            self.mostProbableWordsForAllDocuments = pd.concat([self.mostProbableWordsForAllDocuments, newData])
+
+        self.mostProbableWordsForAllDocuments = self.mostProbableWordsForAllDocuments.sort_values(['doc_id', 'probability'], ascending=[True, False])
 
         return
 
@@ -672,6 +697,8 @@ class MLModel:
 
         #Step 5 of ProbTop2Vec Algorithm
         self.getProbOfWordGivenDocument()
+
+        self.getMostProbableWordsForAllDocuments()
 
 
 
