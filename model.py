@@ -683,6 +683,33 @@ class MLModel:
 
         return
 
+    def getMostProbableWordsForAllDocumentsAsList(self):
+
+        self.mostProbableWordsForAllDocumentsAsList = pd.DataFrame(columns=['doc_id', 'words', 'probabilities'])
+
+        # unique_doc_ids = self.mostProbableWordsForAllDocuments.doc_id.unique()
+        #
+        # missing =  [id for id in range(500) if id not in unique_doc_ids]
+        #
+        # num_doc_ids = len(unique_doc_ids)
+        # for doc_id in range(num_doc_ids):
+
+        for doc_id in range(len(self.documents)):
+
+            filter = self.mostProbableWordsForAllDocuments['doc_id'] == doc_id
+
+            probabilities = self.mostProbableWordsForAllDocuments[filter]['probability'].tolist()
+            words = self.mostProbableWordsForAllDocuments[filter]['word'].tolist()
+
+            newData = pd.DataFrame(columns=['doc_id', 'words', 'probabilities'])
+            newData.at[doc_id, 'doc_id'] = doc_id
+            newData.at[doc_id, 'words'] = words
+            newData.at[doc_id, 'probabilities'] = probabilities
+
+            self.mostProbableWordsForAllDocumentsAsList = pd.concat([self.mostProbableWordsForAllDocumentsAsList, newData])
+
+        return
+
     def run_all(self, model_path, min_cluster_size):
         self.min_cluster_size = min_cluster_size
         self.set_pretrained_model(model_path)
@@ -699,6 +726,7 @@ class MLModel:
         self.getProbOfWordGivenDocument()
 
         self.getMostProbableWordsForAllDocuments()
+        self.getMostProbableWordsForAllDocumentsAsList()
 
 
 
