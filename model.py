@@ -659,9 +659,26 @@ class MLModel:
 
         return
 
-    def getMostProbableWordsForAllDocuments(self):
+    def getDocumentWordProbabilities(self):
 
-        self.mostProbableWordsForAllDocuments = pd.DataFrame(columns=['doc_id', 'word', 'probability'])
+        '''
+
+        This method populates self.documentWordProbabilities with word probabilities for each document
+        in the corpus, sorted in descending order (i.e. the most probable word for a given document
+        appears first).
+
+        There is one row for each document/word/probability combination, and thus usually multiple rows for
+        each document.
+
+        e.g.
+
+        document_id word  probability
+        1           cat   1.0
+        1           dog   0.5
+
+        '''
+
+        self.documentWordProbabilities = pd.DataFrame(columns=['doc_id', 'word', 'probability'])
 
         for doc_id in range(0, len(self.documents)):
 
@@ -677,36 +694,45 @@ class MLModel:
                     "word": words,
                     "probability": probs})
 
-            self.mostProbableWordsForAllDocuments = pd.concat([self.mostProbableWordsForAllDocuments, newData])
+            self.documentWordProbabilities = pd.concat([self.documentWordProbabilities, newData])
 
-        self.mostProbableWordsForAllDocuments = self.mostProbableWordsForAllDocuments.sort_values(['doc_id', 'probability'], ascending=[True, False])
+        self.documentWordProbabilities = self.documentWordProbabilities.sort_values(['doc_id', 'probability'], ascending=[True, False])
 
         return
 
-    def getMostProbableWordsForAllDocumentsAsList(self):
+    def getDocumentWordProbabilitiesForVisualization(self):
 
-        self.mostProbableWordsForAllDocumentsAsList = pd.DataFrame(columns=['doc_id', 'words', 'probabilities'])
+        '''
 
-        # unique_doc_ids = self.mostProbableWordsForAllDocuments.doc_id.unique()
-        #
-        # missing =  [id for id in range(500) if id not in unique_doc_ids]
-        #
-        # num_doc_ids = len(unique_doc_ids)
-        # for doc_id in range(num_doc_ids):
+        This method populates self.documentWordProbabilitiesForVisualization with word probabilities for each document
+        in the corpus, sorted in descending order (i.e. the most probable word for a given document
+        appears first).
+
+        There is one row per document.
+
+        e.g.
+
+        document_id words   probabilities
+        1           [cat,dog]   [1.0, 0.5]
+        2           [bat,hog]   [0.7, 0.4]
+
+        '''
+
+        self.documentWordProbabilitiesForVisualization = pd.DataFrame(columns=['doc_id', 'words', 'probabilities'])
 
         for doc_id in range(len(self.documents)):
 
-            filter = self.mostProbableWordsForAllDocuments['doc_id'] == doc_id
+            filter = self.documentWordProbabilities['doc_id'] == doc_id
 
-            probabilities = self.mostProbableWordsForAllDocuments[filter]['probability'].tolist()
-            words = self.mostProbableWordsForAllDocuments[filter]['word'].tolist()
+            probabilities = self.documentWordProbabilities[filter]['probability'].tolist()
+            words = self.documentWordProbabilities[filter]['word'].tolist()
 
             newData = pd.DataFrame(columns=['doc_id', 'words', 'probabilities'])
             newData.at[doc_id, 'doc_id'] = doc_id
             newData.at[doc_id, 'words'] = words
             newData.at[doc_id, 'probabilities'] = probabilities
 
-            self.mostProbableWordsForAllDocumentsAsList = pd.concat([self.mostProbableWordsForAllDocumentsAsList, newData])
+            self.documentWordProbabilitiesForVisualization = pd.concat([self.documentWordProbabilitiesForVisualization, newData])
 
         return
 
@@ -725,8 +751,8 @@ class MLModel:
         #Step 5 of ProbTop2Vec Algorithm
         self.getProbOfWordGivenDocument()
 
-        self.getMostProbableWordsForAllDocuments()
-        self.getMostProbableWordsForAllDocumentsAsList()
+        self.getDocumentWordProbabilities()
+        self.getDocumentWordProbabilitiesForVisualization()
 
 
 
