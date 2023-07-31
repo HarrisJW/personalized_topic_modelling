@@ -164,7 +164,7 @@ class MLModel:
             self.model_name = model_path
 
 
-    def reduce_dims(self):
+    def reduce_dims_document_embeddings(self):
         """
         res = umap.UMAP(n_neighbors=25,
                                                  n_components=5,
@@ -182,16 +182,18 @@ class MLModel:
                                                            random_state=42).fit_transform(
             self.document_embeddings)
 
-        # self.umap_topic_embeddings_cluster = umap.UMAP(n_neighbors=25,
-        #                                                   n_components=5,
-        #                                                   metric='cosine',
-        #                                                   random_state=42).fit_transform(self.topic_vectors)
-        #
-        # self.umap_topic_embeddings_data_viz = umap.UMAP(n_neighbors=25, n_components=2, min_dist=0.5, metric='cosine',
-        #                                                    random_state=42).fit_transform(self.topic_vectors)
-
         self.x_range = [float(min(self.umap_document_embeddings_data_viz[:, 0]) - 1.5), float(max(self.umap_document_embeddings_data_viz[:, 0]) + 1.5)]
         self.y_range = [float(min(self.umap_document_embeddings_data_viz[:, 1]) - 1.5), float(max(self.umap_document_embeddings_data_viz[:, 1]) + 1.5)]
+
+    def reduce_dims_topic_embeddings(self):
+
+        self.umap_topic_embeddings_cluster = umap.UMAP(n_neighbors=25,
+                                                       n_components=5,
+                                                       metric='cosine',
+                                                       random_state=42).fit_transform(self.topic_vectors)
+
+        self.umap_topic_embeddings_data_viz = umap.UMAP(n_neighbors=25, n_components=2, min_dist=0.5, metric='cosine',
+                                                        random_state=42).fit_transform(self.topic_vectors)
 
     def make_clusters(self, min_cluster_size):
         config = self.config
@@ -260,16 +262,19 @@ class MLModel:
         else:
             return doc_scores, doc_ids
 
-    def find_topic_words_and_scores(self, topic_vectors):
+    def find_topic_words_and_scores(self):
+
         topic_words = []
         topic_word_scores = []
 
-        res = np.inner(topic_vectors, self.word_vectors)
+        #TODO: How to calculate word_vectors? This is probably already done in the document embedding step?
+
+        res = np.inner(self.topic_vectors, self.word_vectors)
         top_words = np.flip(np.argsort(res, axis=1), axis=1)
         top_scores = np.flip(np.sort(res, axis=1), axis=1)
 
         for words, scores in zip(top_words, top_scores):
-            topic_words.append([self.vocab[i] for i in words[0:50]])
+            topic_words.append([self.vocabulary[i] for i in words[0:50]])
             topic_word_scores.append(scores[0:50])
 
         topic_words = np.array(topic_words)
@@ -740,10 +745,12 @@ class MLModel:
         self.min_cluster_size = min_cluster_size
         self.set_pretrained_model(model_path)
         if self.config['umap']:
-            self.reduce_dims()
+            self.reduce_dims_document_embeddings()
         else:
             self.umap_document_embeddings_cluster = self.document_embeddings
         self.make_clusters(min_cluster_size)
+
+        self.reduce_dims_topic_embeddings()
 
         #Step 4 of ProbTop2Vec Algorithm
         self.updateVocabularyAndDocumentTermMatrix()
@@ -753,6 +760,9 @@ class MLModel:
 
         self.getDocumentWordProbabilities()
         self.getDocumentWordProbabilitiesForVisualization()
+
+        #TODO: Determine how to calculate word vectors...
+        #self.find_topic_words_and_scores()
 
 
 

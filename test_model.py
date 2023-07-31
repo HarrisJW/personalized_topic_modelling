@@ -2,6 +2,7 @@ from quant_eval import get_dataset
 from model import MLModel
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
 
 config = {'num_iters': 50,
           'model_path': 'sentence-transformers/all-MiniLM-L6-v2',
@@ -41,8 +42,15 @@ fig = px.scatter(df, x="x", y="y", color="cluster_id", hover_data={'cluster_id':
                                                                    'document_text':True,
                                                                    'words': words,
                                                                    'probabilities': probabilities})
+#Plot Topic Vectors
+#TODO: Topic vectors do not share same space as document vectors. I expected a given topic to be plotted in the centre of its documents.
+topic_vectors_df = pd.DataFrame(m.umap_topic_embeddings_data_viz, columns = ['x','y'])
 
-
+fig.add_trace(go.Scatter(x=topic_vectors_df['x'],
+                            y=topic_vectors_df['y'],
+                            mode="markers",
+                            marker=dict(size=20),
+                            showlegend=False))
 
 fig.show()
 
