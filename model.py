@@ -664,7 +664,7 @@ class MLModel:
 
         return
 
-    def getProbOfDocumentGivenTopic(self, num_clusters):
+    def getProbOfDocumentGivenTopic(self):
 
         '''
 
@@ -698,7 +698,10 @@ class MLModel:
 
                 current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
 
-                # What is the expected cardinality of cluster_mean and cluster_covariance?
+                # TODO: This method returns values, but they all appear to be zero.
+                #  What is the expected cardinality of cluster_mean and cluster_covariance?
+                #  Probably need to modify values/flags passed to calculate cluster mean and covariance.
+
                 cluster_mean = np.mean(current_cluster_document_embeddings, axis=0) #Should this be axis=0 or 1?
 
                 cluster_covariance = np.cov(current_cluster_document_embeddings, rowvar=False) #Should rowvar be True or False?
@@ -809,7 +812,7 @@ class MLModel:
         self.getDocumentWordProbabilities()
         self.getDocumentWordProbabilitiesForVisualization()
 
-        self.getProbOfDocumentGivenTopic(20)
+        self.getProbOfDocumentGivenTopic()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
