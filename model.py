@@ -664,6 +664,54 @@ class MLModel:
 
         return
 
+    def getProbOfDocumentGivenTopic(self, num_clusters):
+
+        '''
+
+        This method is meant to address steps 6-10 of the ProbTop2vec algorithm.
+
+        :param num_clusters:
+        :return:
+        '''
+        #Fit gaussian mixture model to document embeddings
+        #from sklearn.mixture import GaussianMixture as GM
+        from scipy.stats import multivariate_normal
+
+        #gmm = GM(n_components=num_clusters, random_state=0).fit(self.document_embeddings)
+
+        #Initialize matrix of zeros |Documents| x |Topics|
+        num_docs = len(self.documents)
+        num_topics = len(np.unique(self.document_topics))
+        self.probOfDocGivenTopic = [[0 for col in range(num_docs)] for row in range(num_topics)]
+
+        # TODO: This is an array of 0's and 1's. There should probably be 0<values<1 so I think this is wrong.
+        # Bhuvana suggests this is step 12.
+        # topicProbsForCurrentDoc = gmm.predict_proba(self.document_embeddings)
+
+        for doc in range(num_docs):
+
+            for topic in range(num_topics):
+                # Get all entries from document_embeddings matching current cluster
+
+                #https://www.statology.org/numpy-get-indices-where-true/
+                current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
+
+                current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
+
+                # What is the expected cardinality of cluster_mean and cluster_covariance?
+                cluster_mean = np.mean(current_cluster_document_embeddings, axis=0) #Should this be axis=0 or 1?
+
+                cluster_covariance = np.cov(current_cluster_document_embeddings, rowvar=False) #Should rowvar be True or False?
+
+                current_probability_density_function = multivariate_normal.pdf(self.document_embeddings[doc],
+                                                                              cluster_mean,
+                                                                              cluster_covariance,
+                                                                                allow_singular=True)#Should this be False?
+
+                self.probOfDocGivenTopic[doc][topic] = current_probability_density_function
+
+        return
+
     def getDocumentWordProbabilities(self):
 
         '''
@@ -760,6 +808,8 @@ class MLModel:
 
         self.getDocumentWordProbabilities()
         self.getDocumentWordProbabilitiesForVisualization()
+
+        self.getProbOfDocumentGivenTopic(20)
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
