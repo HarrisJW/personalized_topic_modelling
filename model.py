@@ -682,7 +682,7 @@ class MLModel:
         #Initialize matrix of zeros |Documents| x |Topics|
         num_docs = len(self.documents)
         num_topics = len(np.unique(self.document_topics))
-        self.probOfDocGivenTopic = [[0 for col in range(num_docs)] for row in range(num_topics)]
+        self.probOfDocGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
 
         # TODO: This is an array of 0's and 1's. There should probably be 0<values<1 so I think this is wrong.
         # Bhuvana suggests this is step 12.
@@ -698,19 +698,20 @@ class MLModel:
 
                 current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
 
-                # TODO: This method returns values, but they all appear to be zero.
-                #  What is the expected cardinality of cluster_mean and cluster_covariance?
-                #  Probably need to modify values/flags passed to calculate cluster mean and covariance.
 
-                cluster_mean = np.mean(current_cluster_document_embeddings, axis=0) #Should this be axis=0 or 1?
 
-                cluster_covariance = np.cov(current_cluster_document_embeddings, rowvar=False) #Should rowvar be True or False?
+                cluster_mean = np.mean(current_cluster_document_embeddings,
+                                       axis=0) #Should this be axis=0 or 1?
+
+                cluster_covariance = np.cov(current_cluster_document_embeddings,
+                                            rowvar=False) #Should rowvar be True or False?
 
                 current_probability_density_function = multivariate_normal.pdf(self.document_embeddings[doc],
                                                                               cluster_mean,
                                                                               cluster_covariance,
                                                                                 allow_singular=True)#Should this be False?
 
+                # TODO: All probabilities appear to be zero. Not sure why.
                 self.probOfDocGivenTopic[doc][topic] = current_probability_density_function
 
         return
