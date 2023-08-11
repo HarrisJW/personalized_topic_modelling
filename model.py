@@ -1,3 +1,4 @@
+import numpy
 from sklearn.datasets import fetch_20newsgroups
 import pandas as pd
 import numpy as np
@@ -119,10 +120,10 @@ class MLModel:
         self.document_term_matrix = None
         self.vocabulary = None
 
-        self.probOfWordGivenDoc = None # p(w|d)
+        self.probOfWordGivenDocument = None # p(w|d)
         self.probOfDocumentGivenTopic = None # p(d|t)
         self.probOfWordGivenTopic = None # p(w|t)
-        self.probOfTopicGivenDoc = None # p(t|d)
+        self.probOfTopicGivenDocument = None # p(t|d)
         self.probOfTopicGivenWord = None # p(t|w)
 
     def set_pretrained_model(self, model_path):
@@ -566,7 +567,7 @@ class MLModel:
         from sklearn.preprocessing import normalize
 
         #TODO: Should this be an l1 norm? Or something else?
-        self.probOfWordGivenDoc = normalize(self.document_term_matrix, axis=0, norm='l1')
+        self.probOfWordGivenDocument = normalize(self.document_term_matrix, axis=0, norm='l1')
 
         return
 
@@ -588,7 +589,7 @@ class MLModel:
         #Initialize matrix of zeros |Documents| x |Topics|
         num_docs = len(self.documents)
         num_topics = len(np.unique(self.document_topics))
-        self.probOfDocGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
+        self.probOfDocumentGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
 
         # Bhuvana suggests this is step 12.
         # topicProbsForCurrentDoc = gmm.predict_proba(self.document_embeddings)
@@ -615,7 +616,49 @@ class MLModel:
                                                                                 allow_singular=True)#Should this be False?
 
                 # TODO: All probabilities appear to be zero. Not sure why.
-                self.probOfDocGivenTopic[doc][topic] = current_probability_density_function
+                self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
+
+        return
+
+    def getProbOfWordGivenTopic(self):
+
+        '''
+        11: p(w|t) ← p(w|d)p(d|t) ◃ This is a matrix multiplication.
+        '''
+
+        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument, self.probOfDocumentGivenTopic)
+
+        return
+
+    def getProbOfTopicGivenDocument(self):
+
+        '''
+
+        12: p(t|d) ← [p(d|t) ∗ π.reshape(-1,1)]⊤ .normalize(axis = 0)
+
+        • ∗ denotes elementwise multiplication and (.)⊤ denotes the matrix transpose.
+        • As the set of documents D is finite, Pd∈D p(d|t) < 1.0 and p(d|t) is not normalized. Likewise, p(w|t) is not normalized.
+
+        '''
+
+        #TODO: Implement this method.
+        self.probOfTopicGivenDocument = None
+
+        return
+
+    def getProbOfTopicGivenWord(self):
+
+        '''
+
+        13: p(t|w) ← [p(w|t) ∗ π.reshape(-1,1)]⊤ .normalize(axis = 0)
+
+        • ∗ denotes elementwise multiplication and (.)⊤ denotes the matrix transpose.
+        • As the set of documents D is finite, Pd∈D p(d|t) < 1.0 and p(d|t) is not normalized. Likewise, p(w|t) is not normalized.
+
+        '''
+        
+        # TODO: Implement this method.
+        self.probOfTopicGivenWord = None
 
         return
 
@@ -642,7 +685,7 @@ class MLModel:
 
         for doc_id in range(0, len(self.documents)):
 
-            output = self.probOfWordGivenDoc[doc_id]
+            output = self.probOfWordGivenDocument[doc_id]
             rows, columns = output.nonzero()
 
             words = self.vocabulary[columns]
