@@ -94,7 +94,9 @@ class NegSemLoss(nn.Module):
         return 0.5*(loss_positive.sum()+loss_negative.sum())/labels.shape[0] #+ torch.softmax(-all_dists,dim=1).mean(dim=0).std()
 
 class MLModel:
+
     def __init__(self, documents, config):
+
         self.documents = documents
         self.np_docs = np.array(documents, dtype="object")
         self.document_ids = np.array(range(0, len(documents)))
@@ -116,7 +118,12 @@ class MLModel:
         self.v2v1_posdataloader = None
         self.document_term_matrix = None
         self.vocabulary = None
-        self.probOfWordGivenDoc = None
+
+        self.probOfWordGivenDoc = None # p(w|d)
+        self.probOfDocumentGivenTopic = None # p(d|t)
+        self.probOfWordGivenTopic = None # p(w|t)
+        self.probOfTopicGivenDoc = None # p(t|d)
+        self.probOfTopicGivenWord = None # p(t|w)
 
     def set_pretrained_model(self, model_path):
         #Load pretrained model from huggingface:
@@ -130,13 +137,12 @@ class MLModel:
         else:
             self.model_name = model_path
 
-
     def reduce_dims_document_embeddings(self):
         """
         res = umap.UMAP(n_neighbors=25,
                                                  n_components=5,
                                                  metric='cosine',
-                                                 random_state=42).fit_transform(np.random.randn(10000,200))
+                                                 random_state=42).fit_transform(np.random.rand(10000,200))
         
         """
         self.umap_document_embeddings_cluster = umap.UMAP(n_neighbors=25,
@@ -691,12 +697,17 @@ class MLModel:
         return
 
     def run_all(self, model_path, min_cluster_size):
+
         self.min_cluster_size = min_cluster_size
+
         self.set_pretrained_model(model_path)
+
         if self.config['umap']:
             self.reduce_dims_document_embeddings()
+
         else:
             self.umap_document_embeddings_cluster = self.document_embeddings
+
         self.make_clusters(min_cluster_size)
 
         self.reduce_dims_topic_embeddings()
@@ -710,7 +721,7 @@ class MLModel:
         self.getDocumentWordProbabilities()
         self.getDocumentWordProbabilitiesForVisualization()
 
-        self.getProbOfDocumentGivenTopic()
+        #self.getProbOfDocumentGivenTopic()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
