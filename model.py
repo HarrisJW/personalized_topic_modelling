@@ -93,39 +93,6 @@ class NegSemLoss(nn.Module):
         
         return 0.5*(loss_positive.sum()+loss_negative.sum())/labels.shape[0] #+ torch.softmax(-all_dists,dim=1).mean(dim=0).std()
 
-# class SemLoss(nn.Module):
-#     def __init__(self, model):
-#         super().__init__()
-#         self.model = model
-    
-#     def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):
-#         embeddings = self.model(sentence_features[0])['sentence_embedding']
-#         aug = get_mask(sentence_features[0])
-#         # embeddings2 = self.model(aug)['sentence_embedding']
-#         class_vectors = [self.model(get_first(sentence_features[i]))['sentence_embedding'] for i in range(1,len(sentence_features))]
-#         cosine_distance = lambda x,y: 1-F.cosine_similarity(x, y)
-#         all_dists = [cosine_distance(embeddings,cv) for cv in class_vectors]
-#         all_dists = torch.stack(all_dists).t()
-#         s = labels==-1
-#         labels[s] = all_dists[s].min(dim=1)[1]
-#         oh = F.one_hot(labels,len(class_vectors)).float().to(all_dists)
-#         margin = 0.5
-#         loss = torch.square((all_dists*oh).sum(dim=1)) + torch.square(F.relu(margin-all_dists*(1-oh))).sum(dim=1)
-
-#         return 0.5*loss[~s].mean() + 0.5*0.1*loss[s].mean()
-#         print(all_dists[0].shape)
-        # class_vectors = torch.cat(class_vectors,dim=0).t()
-        # cv_penalty = torch.square(class_vectors-class_vectors.mean(dim=1,keepdim=True)).mean()
-        # logits = embeddings@class_vectors
-        # log_logits = torch.log_softmax(logits, dim=1)
-        # ce_loss = 0
-        # count = 0
-        # for i in range(len(sentence_features)-1):
-        #     ce_loss = ce_loss - log_logits[labels==i].sum()
-        #     count += (labels==i).sum()
-        # loss = ce_loss/count
-        # return loss 
-
 class MLModel:
     def __init__(self, documents, config):
         self.documents = documents
@@ -535,60 +502,6 @@ class MLModel:
         retrain_model.save(new_path)
         return new_path
 
-    # def apply_f2w(self, model_path, feedback, train=True):
-    #     import random
-    #     config = self.config
-    #     if feedback is not None:
-    #         self.feedbacks.append(feedback)
-    #     full_train_data = []
-    #     for cw, feedback in self.feedbacks:
-    #         clusters = set()
-    #         neg_idxs = set()
-    #         fb_set = set(feedback)
-    #         for doc_id in feedback:
-    #             clusters.add(self.doc_top[doc_id])
-    #         for doc_id in range(len(self.documents)):
-    #             if doc_id not in fb_set and self.doc_top[doc_id] in clusters:
-    #                 if not(any([w in self.documents[doc_id].lower() for w in cw])):
-    #                     neg_idxs.add(doc_id)
-    #         # print(len(neg_idxs))
-    #         for i in range(0,len(feedback)):
-    #             d1 = self.documents[feedback[i]]
-    #             # for j in range(i+1, len(feedback)): #
-    #             #     d2 = self.documents[feedback[j]]
-    #             #     # neg_idx = random.choice(list(set(range(len(self.documents)))-set(feedback)))
-    #             #     full_train_data.append(InputExample(texts=[d1, d2], label=1.0))
-    #             # for neg_idx in neg_idxs:
-    #             #     full_train_data.append(InputExample(texts=[d1, self.documents[neg_idx]], label=0.0))
-    #             full_train_data.append(InputExample(texts=[d1, ' '.join(cw)], label=1.0))
-    #         for neg_idx in neg_idxs:
-    #             full_train_data.append(InputExample(texts=[self.documents[neg_idx], ' '.join(cw)], label=0.0))
-    #     for idx1 in range(len(self.feedbacks)):
-    #         for idx2 in range(idx1+1,len(self.feedbacks)):
-    #             cw1, _ = self.feedbacks[idx1]
-    #             cw2, _ = self.feedbacks[idx2]
-    #             full_train_data.append(InputExample(texts=[' '.join(cw1), ' '.join(cw2)], label=0.0))
-    #     print(len(full_train_data))
-    #     self.v2_bank = full_train_data + self.bank
-    #     if not(train):
-    #         return
-    #     retrain_model = SentenceTransformer(model_path)
-    #     import random
-    #     train_dataloader = DataLoader(random.sample(self.v2_bank,min(len(self.v2_bank),200*500*config['epoch'])), shuffle=True, batch_size=200)
-    #     if (config['loss']=='sbert_type'):
-    #         train_loss = Loss(retrain_model)
-    #     if (config['loss']=='cos'):
-    #         train_loss = SemLoss(retrain_model)
-    #         # train_loss = losses.OnlineContrastiveLoss(retrain_model)
-    #         # train_loss = losses.CosineSimilarityLoss(retrain_model)
-
-    #     # Tune the model
-    #     retrain_model.fit(train_objectives=[(train_dataloader, train_loss)], scheduler='constantlr', epochs=1, warmup_steps=0, optimizer_params={'lr': 2e-5})
-
-    #     curr_time = datetime.now().strftime("%Y%m%d-%H:%M:%S")
-    #     new_path = f"{self.workdir}/retrained-model"+curr_time
-    #     retrain_model.save(new_path)
-    #     return new_path
     
     def apply_f2w(self, feedback, train=True):
 
@@ -626,19 +539,6 @@ class MLModel:
         self.v2_bank = full_train_data + unlabeled_data_v2
 
         self.v2_dataloader = DataLoader(random.sample(self.v2_bank,min(len(self.v2_bank),200*500*config['epoch'])), shuffle=True, batch_size=200)
-        # retrain_model = SentenceTransformer(model_path)
-        # if (config['loss']=='sbert_type'):
-        #     train_loss = Loss(retrain_model)
-        # if (config['loss']=='cos'):
-        #     train_loss = SemLoss(retrain_model)
-        
-        # # Tune the model
-        # retrain_model.fit(train_objectives=[(train_dataloader, train_loss)], scheduler='constantlr', epochs=1, warmup_steps=0, optimizer_params={'lr': 2e-5})
-
-        # curr_time = datetime.now().strftime("%Y%m%d-%H:%M:%S")
-        # new_path = f"{self.workdir}/retrained-model"+curr_time
-        # retrain_model.save(new_path)
-        # return new_path
 
     def updateVocabularyAndDocumentTermMatrix(self):
 
@@ -684,7 +584,6 @@ class MLModel:
         num_topics = len(np.unique(self.document_topics))
         self.probOfDocGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
 
-        # TODO: This is an array of 0's and 1's. There should probably be 0<values<1 so I think this is wrong.
         # Bhuvana suggests this is step 12.
         # topicProbsForCurrentDoc = gmm.predict_proba(self.document_embeddings)
 
@@ -697,8 +596,6 @@ class MLModel:
                 current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
 
                 current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
-
-
 
                 cluster_mean = np.mean(current_cluster_document_embeddings,
                                        axis=0) #Should this be axis=0 or 1?
