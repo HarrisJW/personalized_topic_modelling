@@ -610,12 +610,17 @@ class MLModel:
                 cluster_covariance = np.cov(current_cluster_document_embeddings,
                                             rowvar=False) #Should rowvar be True or False?
 
-                current_probability_density_function = multivariate_normal.pdf(self.document_embeddings[doc],
+                #Does this help?
+                #https://stackoverflow.com/questions/45058690/when-using-scipy-stats-multivariate-normal-pdf-having-the-erroroperands-could-n
+                #current_x = self.document_embeddings[doc]
+                current_x = self.document_embeddings
+                current_probability_density_function = multivariate_normal.pdf(current_x,
                                                                               cluster_mean,
                                                                               cluster_covariance,
                                                                                 allow_singular=True)#Should this be False?
 
                 # TODO: All probabilities appear to be zero. Not sure why.
+                # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
                 self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
 
         return
@@ -656,7 +661,7 @@ class MLModel:
         • As the set of documents D is finite, Pd∈D p(d|t) < 1.0 and p(d|t) is not normalized. Likewise, p(w|t) is not normalized.
 
         '''
-        
+
         # TODO: Implement this method.
         self.probOfTopicGivenWord = None
 
@@ -764,7 +769,7 @@ class MLModel:
         self.getDocumentWordProbabilities()
         self.getDocumentWordProbabilitiesForVisualization()
 
-        #self.getProbOfDocumentGivenTopic()
+        self.getProbOfDocumentGivenTopic()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
