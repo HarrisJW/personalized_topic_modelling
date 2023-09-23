@@ -188,7 +188,9 @@ class MLModel:
             mean_init = None
             if SemLoss.cvs is not None:
                 mean_init = (SemLoss.cvs)
-            gm = GaussianMixture(n_components=min_cluster_size, random_state=0, covariance_type='diag',means_init=mean_init).fit(self.umap_document_embeddings_cluster)
+            #Jonathan Update September 23 2023
+            #https://datascience.stackexchange.com/questions/21660/valueerror-ill-defined-empirical-covariance-when-running-a-gaussian-mixture-mode
+            gm = GaussianMixture(n_components=min_cluster_size, random_state=0, covariance_type='diag',means_init=mean_init,reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
             self.clusters = gm.predict(self.umap_document_embeddings_cluster)
        
         cluster_labels = self.clusters
@@ -596,6 +598,7 @@ class MLModel:
 
         for doc in range(num_docs):
 
+            print("Evaluating document " + str(doc))
             for topic in range(num_topics):
                 # Get all entries from document_embeddings matching current cluster
 
@@ -619,7 +622,7 @@ class MLModel:
                                                                               cluster_covariance,
                                                                                 allow_singular=True)#Should this be False?
 
-                # TODO: All probabilities appear to be zero. Not sure why.
+                # TODO: Most probabilities appear to be zero. Not sure why
                 # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
                 self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
 
@@ -773,6 +776,8 @@ class MLModel:
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
+
+        return
 
 
 

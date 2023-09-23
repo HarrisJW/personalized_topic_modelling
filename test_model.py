@@ -2,6 +2,7 @@ from quant_eval import get_dataset
 from model import MLModel
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 
 config = {'num_iters': 50,
@@ -15,7 +16,18 @@ config = {'num_iters': 50,
           'oracle': 'v1v2',
           'dataset': 'test'}
 
-DATASET, GROUND_TRUTH = get_dataset(config.get('dataset', '20newsgroups'))
+#target_dataset = config.get('dataset', '20newsgroups')
+target_dataset = '20newsgroups'
+DATASET, GROUND_TRUTH = get_dataset(target_dataset)
+
+#Get a sample subset of data points for faster development/testing.
+DATASET_DF = pd.DataFrame(DATASET)
+num_samples = 50
+sample_indices = pd.Index(np.random.choice(DATASET_DF.index, num_samples))
+
+DATASET = [DATASET[i] for i in sample_indices]
+GROUND_TRUTH = [GROUND_TRUTH[i] for i in sample_indices]
+
 model_path = config["model_path"]
 
 # Convert data to lowercase.
@@ -26,7 +38,7 @@ m = MLModel(DATASET, config)
 
 m.run_all(model_path, config['min_cluster_size'])
 
-df = pd.DataFrame(data = m.umap_document_embeddings_data_viz)
+df = pd.DataFrame(data=m.umap_document_embeddings_data_viz)
 df.columns = ['x', 'y']
 df['cluster_id'] = m.clusters.tolist()
 #df['document_text'] = m.documents
