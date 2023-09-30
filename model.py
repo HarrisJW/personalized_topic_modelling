@@ -575,6 +575,9 @@ class MLModel:
 
     def getProbOfDocumentGivenTopic(self):
 
+        #TODO: The expected dimensions of p(d|t): matrix of shape |D| × NT
+        #The current dimensions are |(doc x top) x (doc)|
+
         '''
 
         This method is meant to address steps 6-10 of the ProbTop2vec algorithm.
@@ -638,7 +641,11 @@ class MLModel:
         '''
 
         #TODO: Does calling toarray() here have unintended consequences? (convert from sparse csc array to array)
-        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument.toarray(), self.probOfDocumentGivenTopic)
+        #The expected dimensions of p(d|t): matrix of shape |D| × NT
+
+        # (e.g. p(w|d) = [|docs|x|words|], p(d|t) = [|?|x|?|]
+        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument.toarray(),
+                                                 self.probOfDocumentGivenTopic)
 
         return
 
