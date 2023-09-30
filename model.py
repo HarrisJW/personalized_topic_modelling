@@ -622,10 +622,13 @@ class MLModel:
                                                                               cluster_covariance,
                                                                                 allow_singular=True)#Should this be False?
 
-                # TODO: Most probabilities appear to be zero. Not sure why
+                # TODO: Do probabilities need to sum to one for a given topic?
                 # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
                 self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
 
+        #TODO: Is this correct?
+        #https://stackoverflow.com/questions/27516849/how-to-convert-list-of-numpy-arrays-into-single-numpy-array
+        self.probOfDocumentGivenTopic = numpy.concatenate(self.probOfDocumentGivenTopic, axis=0)
         return
 
     def getProbOfWordGivenTopic(self):
@@ -634,7 +637,8 @@ class MLModel:
         11: p(w|t) ← p(w|d)p(d|t) ◃ This is a matrix multiplication.
         '''
 
-        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument, self.probOfDocumentGivenTopic)
+        #TODO: Does calling toarray() here have unintended consequences? (convert from sparse csc array to array)
+        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument.toarray(), self.probOfDocumentGivenTopic)
 
         return
 
@@ -773,6 +777,8 @@ class MLModel:
         self.getDocumentWordProbabilitiesForVisualization()
 
         self.getProbOfDocumentGivenTopic()
+
+        self.getProbOfWordGivenTopic()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
