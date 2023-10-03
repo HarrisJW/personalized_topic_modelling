@@ -575,8 +575,8 @@ class MLModel:
 
     def getProbOfDocumentGivenTopic(self):
 
-        #TODO: The expected dimensions of p(d|t): matrix of shape |D| × NT
-        #The current dimensions are |(doc x top) x (doc)|
+        #TODO: The expected dimensions of p(d|t): matrix of shape |D| × NTc
+        #The current actual dimensions of the array returned are |(doc x top) x (doc)|
 
         '''
 
@@ -594,44 +594,46 @@ class MLModel:
         #Initialize matrix of zeros |Documents| x |Topics|
         num_docs = len(self.documents)
         num_topics = len(np.unique(self.document_topics))
-        self.probOfDocumentGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
+        #self.probOfDocumentGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
+        self.probOfDocumentGivenTopic = [0 for row in range(num_topics)]
 
         # Bhuvana suggests this is step 12.
         # topicProbsForCurrentDoc = gmm.predict_proba(self.document_embeddings)
 
-        for doc in range(num_docs):
+        for topic in range(num_topics):
 
-            print("Evaluating document " + str(doc))
-            for topic in range(num_topics):
-                # Get all entries from document_embeddings matching current cluster
+            print("Evaluating topic " + str(topic))
+            # Get all entries from document_embeddings matching current cluster
 
-                #https://www.statology.org/numpy-get-indices-where-true/
-                current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
+            #https://www.statology.org/numpy-get-indices-where-true/
+            current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
 
-                current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
+            current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
 
-                cluster_mean = np.mean(current_cluster_document_embeddings,
-                                       axis=0) #Should this be axis=0 or 1?
+            cluster_mean = np.mean(current_cluster_document_embeddings,
+                                   axis=0) #Should this be axis=0 or 1?
 
-                cluster_covariance = np.cov(current_cluster_document_embeddings,
-                                            rowvar=False) #Should rowvar be True or False?
+            cluster_covariance = np.cov(current_cluster_document_embeddings,
+                                        rowvar=False) #Should rowvar be True or False?
 
-                #Does this help?
-                #https://stackoverflow.com/questions/45058690/when-using-scipy-stats-multivariate-normal-pdf-having-the-erroroperands-could-n
-                #current_x = self.document_embeddings[doc]
-                current_x = self.document_embeddings
-                current_probability_density_function = multivariate_normal.pdf(current_x,
-                                                                              cluster_mean,
-                                                                              cluster_covariance,
-                                                                                allow_singular=True)#Should this be False?
+            #Does this help?
+            #https://stackoverflow.com/questions/45058690/when-using-scipy-stats-multivariate-normal-pdf-having-the-erroroperands-could-n
+            #current_x = self.document_embeddings[doc]
+            current_x = self.document_embeddings
+            current_probability_density_function = multivariate_normal.pdf(current_x,
+                                                                          cluster_mean,
+                                                                          cluster_covariance,
+                                                                            allow_singular=True)#Should this be False?
 
-                # TODO: Do probabilities need to sum to one for a given topic?
-                # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
-                self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
+            # TODO: Do probabilities need to sum to one for a given topic?
+            # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
+            #self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
+            self.probOfDocumentGivenTopic[topic] = current_probability_density_function
 
         #TODO: Is this correct?
         #https://stackoverflow.com/questions/27516849/how-to-convert-list-of-numpy-arrays-into-single-numpy-array
-        self.probOfDocumentGivenTopic = numpy.concatenate(self.probOfDocumentGivenTopic, axis=0)
+        #self.probOfDocumentGivenTopic = numpy.concatenate(self.probOfDocumentGivenTopic, axis=0)
+
         return
 
     def getProbOfWordGivenTopic(self):
@@ -644,8 +646,10 @@ class MLModel:
         #The expected dimensions of p(d|t): matrix of shape |D| × NT
 
         # (e.g. p(w|d) = [|docs|x|words|], p(d|t) = [|?|x|?|]
-        self.probOfWordGivenTopic = numpy.matmul(self.probOfWordGivenDocument.toarray(),
-                                                 self.probOfDocumentGivenTopic)
+        probOfWordGivenDocument = self.probOfWordGivenDocument.toarray()
+        probOfDocumentGivenTopic = np.transpose(np.array(self.probOfDocumentGivenTopic))
+
+        self.probOfWordGivenTopic = numpy.matmul(probOfWordGivenDocument, probOfDocumentGivenTopic)
 
         return
 
