@@ -646,7 +646,9 @@ class MLModel:
         #The expected dimensions of p(d|t): matrix of shape |D| × NT
 
         # (e.g. p(w|d) = [|docs|x|words|], p(d|t) = [|?|x|?|]
-        probOfWordGivenDocument = self.probOfWordGivenDocument.toarray()
+        #TODO refactor so that these transformations occur in the initial calculations of
+        # p(w|d) and p(d|t)
+        probOfWordGivenDocument = np.transpose(self.probOfWordGivenDocument.toarray())
         probOfDocumentGivenTopic = np.transpose(np.array(self.probOfDocumentGivenTopic))
 
         self.probOfWordGivenTopic = numpy.matmul(probOfWordGivenDocument, probOfDocumentGivenTopic)
