@@ -22,8 +22,8 @@ DATASET, GROUND_TRUTH = get_dataset(target_dataset)
 
 #Get a sample subset of data points for faster development/testing.
 DATASET_DF = pd.DataFrame(DATASET)
-num_samples = 25
-sample_indices = pd.Index(np.random.choice(DATASET_DF.index, num_samples))
+NUM_SAMPLES = 5000
+sample_indices = pd.Index(np.random.choice(DATASET_DF.index, NUM_SAMPLES))
 
 SAMPLE_DATASET = [DATASET[i] for i in sample_indices]
 SAMPLE_GROUND_TRUTH = [GROUND_TRUTH[i] for i in sample_indices]
@@ -57,13 +57,13 @@ fig = px.scatter(df, x="x", y="y", color="cluster_id", hover_data={'cluster_id':
 #Plot Topic Vectors
 # TODO: Topic vectors do not share same space as document vectors. I expected a given topic to be plotted in the centre of its documents.
 # Do I need to calculate document and topic vectors in same step?
-topic_vectors_df = pd.DataFrame(m.umap_topic_embeddings_data_viz, columns = ['x','y'])
+#topic_vectors_df = pd.DataFrame(m.umap_topic_embeddings_data_viz, columns = ['x','y'])
 
-fig.add_trace(go.Scatter(x=topic_vectors_df['x'],
-                            y=topic_vectors_df['y'],
-                            mode="markers",
-                            marker=dict(size=20),
-                            showlegend=False))
+#fig.add_trace(go.Scatter(x=topic_vectors_df['x'],
+#                            y=topic_vectors_df['y'],
+#                            mode="markers",
+#                            marker=dict(size=20),
+#                            showlegend=False))
 
 fig.show()
 
