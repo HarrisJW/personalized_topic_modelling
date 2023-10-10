@@ -22,7 +22,7 @@ DATASET, GROUND_TRUTH = get_dataset(target_dataset)
 
 #Get a sample subset of data points for faster development/testing.
 DATASET_DF = pd.DataFrame(DATASET)
-NUM_SAMPLES = 5000
+NUM_SAMPLES = 500
 sample_indices = pd.Index(np.random.choice(DATASET_DF.index, NUM_SAMPLES))
 
 SAMPLE_DATASET = [DATASET[i] for i in sample_indices]

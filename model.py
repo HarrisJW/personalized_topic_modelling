@@ -119,8 +119,10 @@ class MLModel:
         self.v2v1_posdataloader = None
         self.document_term_matrix = None
         self.vocabulary = None
+        self.gaussianMixtureModel = None
 
-        self.probOfWordGivenDocument = None # p(w|d)
+        #self.probOfWordGivenDocument = None # p(w|d)
+        self.probOfWordGivenDocument = None  # p(w|d)
         self.probOfDocumentGivenTopic = None # p(d|t)
         self.probOfWordGivenTopic = None # p(w|t)
         self.probOfTopicGivenDocument = None # p(t|d)
@@ -190,8 +192,11 @@ class MLModel:
                 mean_init = (SemLoss.cvs)
             #Jonathan Update September 23 2023
             #https://datascience.stackexchange.com/questions/21660/valueerror-ill-defined-empirical-covariance-when-running-a-gaussian-mixture-mode
-            gm = GaussianMixture(n_components=min_cluster_size, random_state=0, covariance_type='diag',means_init=mean_init,reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
-            self.clusters = gm.predict(self.umap_document_embeddings_cluster)
+
+            NUM_TOPICS = 20
+            self.gaussianMixtureModel = GaussianMixture(n_components=NUM_TOPICS, random_state=0, covariance_type='full',means_init=mean_init,reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
+
+            self.clusters = self.gaussianMixtureModel.predict(self.umap_document_embeddings_cluster)
        
         cluster_labels = self.clusters
         unique_cluster_labels = set(cluster_labels)
@@ -589,50 +594,64 @@ class MLModel:
         #from sklearn.mixture import GaussianMixture as GM
         from scipy.stats import multivariate_normal
 
+        #TODO: What should inform the choice of num_custers?
+        #num_clusters = 20
         #gmm = GM(n_components=num_clusters, random_state=0).fit(self.document_embeddings)
 
         #Initialize matrix of zeros |Documents| x |Topics|
         num_docs = len(self.documents)
         num_topics = len(np.unique(self.document_topics))
-        #self.probOfDocumentGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
-        self.probOfDocumentGivenTopic = [0 for row in range(num_topics)]
+        self.probOfDocumentGivenTopic = [[0 for col in range(num_topics)] for row in range(num_docs)]
+        #self.probOfDocumentGivenTopic = [0 for row in range(num_topics)]
 
         # Bhuvana suggests this is step 12.
         # topicProbsForCurrentDoc = gmm.predict_proba(self.document_embeddings)
 
-        for topic in range(num_topics):
+        for document in range(num_docs):
 
-            print("Evaluating topic " + str(topic))
-            # Get all entries from document_embeddings matching current cluster
+            for topic in range(num_topics):
 
-            #https://www.statology.org/numpy-get-indices-where-true/
-            current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
+                #print("Evaluating topic " + str(topic))
+                # Get all entries from document_embeddings matching current cluster
 
-            current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
+                #https://www.statology.org/numpy-get-indices-where-true/
+                #current_cluster_selector = np.asarray(self.document_topics == topic).nonzero()
 
-            cluster_mean = np.mean(current_cluster_document_embeddings,
-                                   axis=0) #Should this be axis=0 or 1?
+                #current_cluster_document_embeddings = self.document_embeddings[current_cluster_selector]
 
-            cluster_covariance = np.cov(current_cluster_document_embeddings,
-                                        rowvar=False) #Should rowvar be True or False?
+                #cluster_mean = np.mean(current_cluster_document_embeddings,
+                                       #axis=0) #Should this be axis=0 or 1?
 
-            #Does this help?
-            #https://stackoverflow.com/questions/45058690/when-using-scipy-stats-multivariate-normal-pdf-having-the-erroroperands-could-n
-            #current_x = self.document_embeddings[doc]
-            current_x = self.document_embeddings
-            current_probability_density_function = multivariate_normal.pdf(current_x,
-                                                                          cluster_mean,
-                                                                          cluster_covariance,
-                                                                            allow_singular=True)#Should this be False?
+                #cluster_covariance = np.cov(current_cluster_document_embeddings,
+                                            #rowvar=False) #Should rowvar be True or False?
 
-            # TODO: Do probabilities need to sum to one for a given topic?
-            # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
-            #self.probOfDocumentGivenTopic[doc][topic] = current_probability_density_function
-            self.probOfDocumentGivenTopic[topic] = current_probability_density_function
+                #Add one to covariance matrix as per this post?
+                #https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
+                #cluster_covariance += 1
+
+                #Does this help?
+                #https://stackoverflow.com/questions/45058690/when-using-scipy-stats-multivariate-normal-pdf-having-the-erroroperands-could-n
+                #current_x = self.document_embeddings[doc]
+                #current_x = self.document_embeddings
+
+                current_x = self.umap_document_embeddings_cluster[document]
+                cluster_mean = self.gaussianMixtureModel.means_[topic]
+                cluster_covariance = self.gaussianMixtureModel.covariances_[topic]
+                current_probability_density_function = multivariate_normal.pdf(current_x,
+                                                                              cluster_mean,
+                                                                              cluster_covariance,
+                                                                                allow_singular=True)#Should this be False?
+
+                # TODO: Do probabilities need to sum to one for a given topic?
+                # is this helpful? https://stackoverflow.com/questions/67700023/multivariate-normal-pdf-returns-zeros
+                self.probOfDocumentGivenTopic[document][topic] = current_probability_density_function
+                #self.probOfDocumentGivenTopic[topic] = current_probability_density_function
 
         #TODO: Is this correct?
         #https://stackoverflow.com/questions/27516849/how-to-convert-list-of-numpy-arrays-into-single-numpy-array
         #self.probOfDocumentGivenTopic = numpy.concatenate(self.probOfDocumentGivenTopic, axis=0)
+
+        print(len(self.probOfDocumentGivenTopic[0]))
 
         return
 
