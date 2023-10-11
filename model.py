@@ -647,11 +647,11 @@ class MLModel:
                 self.probOfDocumentGivenTopic[document][topic] = current_probability_density_function
                 #self.probOfDocumentGivenTopic[topic] = current_probability_density_function
 
-        #TODO: Is this correct?
+        #TODO: Reshape self.probOfDocumentGivenTopic to have dimensions DocsxTopics
         #https://stackoverflow.com/questions/27516849/how-to-convert-list-of-numpy-arrays-into-single-numpy-array
-        #self.probOfDocumentGivenTopic = numpy.concatenate(self.probOfDocumentGivenTopic, axis=0)
+        self.probOfDocumentGivenTopic = numpy.array(self.probOfDocumentGivenTopic)
 
-        print(len(self.probOfDocumentGivenTopic[0]))
+        #print(len(self.probOfDocumentGivenTopic[0]))
 
         return
 
@@ -668,7 +668,7 @@ class MLModel:
         #TODO refactor so that these transformations occur in the initial calculations of
         # p(w|d) and p(d|t)
         probOfWordGivenDocument = np.transpose(self.probOfWordGivenDocument.toarray())
-        probOfDocumentGivenTopic = np.transpose(np.array(self.probOfDocumentGivenTopic))
+        probOfDocumentGivenTopic = self.probOfDocumentGivenTopic
 
         self.probOfWordGivenTopic = numpy.matmul(probOfWordGivenDocument, probOfDocumentGivenTopic)
 
@@ -685,8 +685,15 @@ class MLModel:
 
         '''
 
-        #TODO: Implement this method.
-        self.probOfTopicGivenDocument = None
+        from sklearn.preprocessing import normalize
+
+        #intermediate = p(d|t) ∗ π.reshape(-1,1)
+        intermediate = numpy.transpose(self.gaussianMixtureModel.weights_.reshape(-1,1))
+        intermediate = numpy.multiply(self.probOfDocumentGivenTopic, intermediate)
+        intermediate = numpy.transpose(intermediate)
+        intermediate = normalize(intermediate, axis=0, norm='l1')
+
+        self.probOfTopicGivenDocument = intermediate
 
         return
 
@@ -811,6 +818,8 @@ class MLModel:
         self.getProbOfDocumentGivenTopic()
 
         self.getProbOfWordGivenTopic()
+
+        self.getProbOfTopicGivenDocument()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
