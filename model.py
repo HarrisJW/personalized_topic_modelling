@@ -688,6 +688,8 @@ class MLModel:
         from sklearn.preprocessing import normalize
 
         #intermediate = p(d|t) ∗ π.reshape(-1,1)
+        #TODO: if there are errors in the contents of probOfTopicGivenDocument, this could be due
+        # to an extra transpose on the first step below.
         intermediate = numpy.transpose(self.gaussianMixtureModel.weights_.reshape(-1,1))
         intermediate = numpy.multiply(self.probOfDocumentGivenTopic, intermediate)
         intermediate = numpy.transpose(intermediate)
@@ -709,7 +711,15 @@ class MLModel:
         '''
 
         # TODO: Implement this method.
-        self.probOfTopicGivenWord = None
+        from sklearn.preprocessing import normalize
+
+        # intermediate = p(d|t) ∗ π.reshape(-1,1)
+        intermediate = numpy.transpose(self.gaussianMixtureModel.weights_.reshape(-1, 1))
+        intermediate = numpy.multiply(self.probOfWordGivenTopic, intermediate)
+        intermediate = numpy.transpose(intermediate)
+        intermediate = normalize(intermediate, axis=0, norm='l1')
+
+        self.probOfTopicGivenWord = intermediate
 
         return
 
@@ -820,6 +830,8 @@ class MLModel:
         self.getProbOfWordGivenTopic()
 
         self.getProbOfTopicGivenDocument()
+
+        self.getProbOfTopicGivenWord()
 
         #TODO: Determine how to calculate word vectors...
         #self.find_topic_words_and_scores()
