@@ -194,7 +194,15 @@ class MLModel:
             #https://datascience.stackexchange.com/questions/21660/valueerror-ill-defined-empirical-covariance-when-running-a-gaussian-mixture-mode
 
             NUM_TOPICS = 20
-            self.gaussianMixtureModel = GaussianMixture(n_components=NUM_TOPICS, random_state=0, covariance_type='full',means_init=mean_init,reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
+
+            try:
+                self.gaussianMixtureModel = GaussianMixture(n_components=NUM_TOPICS, random_state=0, covariance_type='full',means_init=mean_init,reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
+
+            except ValueError: #mismatch between means_init (20x384) and self.umap_document_embeddings_cluster (20x5)
+                # Initialize gaussian mixture model means with K-Means algorithm.
+                # REFERENCE: https://www.vlfeat.org/overview/gmm.html
+                self.gaussianMixtureModel = GaussianMixture(n_components=NUM_TOPICS, random_state=0, covariance_type='full',init_params='kmeans',reg_covar=1e-5).fit(self.umap_document_embeddings_cluster)
+                pass
 
             self.clusters = self.gaussianMixtureModel.predict(self.umap_document_embeddings_cluster)
        
