@@ -1,5 +1,6 @@
 from oracle import *
 from oraclev2 import *
+from oraclev3 import *
 from model import *
 from sklearn.datasets import fetch_20newsgroups
 import pickle
@@ -135,8 +136,35 @@ def eval(config, debug=False):
     
     o1 = Oraclev1(DATASET, GROUND_TRUTH, global_model)
     o2 = Oraclev2(DATASET, GROUND_TRUTH, global_model)
+    o3 = Oraclev3(DATASET, GROUND_TRUTH, global_model)
 
     model_path = config["model_path"]
+
+    if 'v3' in config['oracle']:
+        top2vec = m.run_all(model_path, config['min_cluster_size'])
+        cluster_labels = m.make_clusters(config['min_cluster_size'])
+        for cluster_id in range(config["min_cluster_size"]):
+            m.apply_f2w(o3.get_bm25_docs_by_prob_word_given_topic_words(cluster_id), train=False)
+        L = []
+        for i in range(10):
+            print(len(cluster_labels))
+            print(len(GROUND_TRUTH))
+            purity_stats = o2.get_purity(cluster_labels)
+            a = np.array(
+                sorted(map(
+                    lambda k:
+                    (purity_stats[1][k], purity_stats[2][k], purity_stats[3][k]),
+                    purity_stats[1]),
+                    key=lambda x: x[0]))
+            pprint.pprint(a)
+            print(a.mean(axis=0))
+            L.append((a.mean(axis=0)[0],model_path))
+            model_path = m.finetune(model_path)
+            top2vec = m.run_all(model_path, config['min_cluster_size'])
+            cluster_labels = m.make_clusters(config['min_cluster_size'])
+        max_purity, model_path = max(L)
+        result['v2'] = max_purity
+        print(f"Choosing model_path {model_path} with purity={max_purity}")
 
     #apply word-level feedback through oracle 2
     if 'v2' in config['oracle']:
